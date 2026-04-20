@@ -1,4 +1,6 @@
 import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 /**
  * Singleton Pattern for PrismaClient
@@ -11,7 +13,12 @@ class PrismaSingleton {
 
   public static getInstance(): PrismaClient {
     if (!PrismaSingleton.instance) {
-      PrismaSingleton.instance = new PrismaClient();
+      if (!process.env.DATABASE_URL) {
+        throw new Error("DATABASE_URL must be provided.");
+      }
+      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const adapter = new PrismaPg(pool);
+      PrismaSingleton.instance = new PrismaClient({ adapter });
     }
     return PrismaSingleton.instance;
   }
