@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  password      String         
+  role          UserRole       @default(STUDENT)
+  name          String?
+
+  organizedEvents Event[]        @relation("OrganizedEvents")
+  assignedTasks   Task[]         @relation("AssignedTasks")
+  registrations   Registration[]
+  managedClubs    Club[]         @relation("ManagedClubs")
+}
+
+enum UserRole {
+  ADMIN
+  ORGANIZER
+  VOLUNTEER
+  STUDENT
+}
+
+model Event {
+  id           Int            @id @default(autoincrement())
+  title        String
+  eventDate    DateTime
+  capacity     Int
+  organizer    User           @relation("OrganizedEvents", fields: [organizerId], references: [id])
+  organizerId  Int
+
+  tasks        Task[]         
+  registrations Registration[]
+}
+
+model Task {
+  id                  Int       @id @default(autoincrement())
+  description         String
+  status              String    @default("PENDING")
+  event               Event     @relation(fields: [eventId], references: [id])
+  eventId             Int
+  assignedVolunteer   User?     @relation("AssignedTasks", fields: [assignedVolunteerId], references: [id])
+  assignedVolunteerId Int?
+}
+
+model Registration {
+  id           Int      @id @default(autoincrement())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       Int
+  event        Event    @relation(fields: [eventId], references: [id])
+  eventId      Int
+  registeredAt DateTime @default(now())
+}
+
+model Club {
+  id          Int      @id @default(autoincrement())
+  name        String
+  admin       User     @relation("ManagedClubs", fields: [adminId], references: [id])
+  adminId     Int
+}
